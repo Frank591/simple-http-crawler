@@ -25,6 +25,7 @@ public class HttpCrawlerTask extends RecursiveTask<Map<String, Integer>> {
         this.maxLinkDeepLevel = maxLinkDeepLevel;
         this.currentLinkDeepLevel = currentLinkDeepLevel;
         alreadyProcessedUrls = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        alreadyProcessedUrls.add(getUrlAsString(url));
     }
 
     private HttpCrawlerTask(CrawlerComponentsFactory factory, URL url, int currentLinkDeepLevel, int maxLinkDeepLevel, Set<String> alreadyProcessedUrls) {
@@ -33,6 +34,7 @@ public class HttpCrawlerTask extends RecursiveTask<Map<String, Integer>> {
         this.maxLinkDeepLevel = maxLinkDeepLevel;
         this.currentLinkDeepLevel = currentLinkDeepLevel;
         this.alreadyProcessedUrls = alreadyProcessedUrls;
+        this.alreadyProcessedUrls.add(getUrlAsString(url));
     }
 
     public Map<String, Integer> compute() {
@@ -61,8 +63,7 @@ public class HttpCrawlerTask extends RecursiveTask<Map<String, Integer>> {
                     System.out.println(String.format("Link to page '%s' from page '%s' was skipped, because linked page was already processed.", linkUrl.toString(), url.toString()));
                     continue;
                 }
-                HttpCrawlerTask newCrawler = new HttpCrawlerTask(factory, linkUrl, currentLinkDeepLevel + 1, maxLinkDeepLevel, alreadyProcessedUrls);
-                alreadyProcessedUrls.add(linkUrl.toString());
+                final HttpCrawlerTask newCrawler = new HttpCrawlerTask(factory, linkUrl, currentLinkDeepLevel + 1, maxLinkDeepLevel, alreadyProcessedUrls);
                 crawlResultsByPageLinks.add(newCrawler.fork());
             }
         }
@@ -85,5 +86,9 @@ public class HttpCrawlerTask extends RecursiveTask<Map<String, Integer>> {
             }
         }
         return analyzeResult;
+    }
+
+    private static String getUrlAsString(URL url) {
+        return url.toString().toLowerCase();
     }
 }

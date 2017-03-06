@@ -57,6 +57,19 @@ public class HttpCrawlerTaskTest {
         TestUtils.assertEquals("result size", 11, result.size());
     }
 
+    @Test
+    public void deep2RecursiveTest() throws Exception {
+        Map<String, Integer> result = getCrawlResult(TestPageDownloader.RECURSIVE_PAGE_URL, 2, parallelism);
+        for (Map.Entry<String, Integer> entry : result.entrySet()) {
+            printWordCount(entry.getKey(), entry.getValue());
+            if ("test".equals(entry.getKey())) {
+                TestUtils.assertEquals("word 'test' count", 181440, entry.getValue());
+            }
+        }
+        TestUtils.assertEquals("result size", 2, result.size());
+    }
+
+
     @Parameterized.Parameters(name = "{index}: parallelismLevel = {0}")
     public static Collection parallelismLevels() {
         return Arrays.asList(new Object[]{1, 2, 10});
