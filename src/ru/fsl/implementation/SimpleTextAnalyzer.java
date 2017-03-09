@@ -11,6 +11,7 @@ import java.util.Map;
 
 public class SimpleTextAnalyzer implements TextAnalyzer {
 
+
     @Override
     @NotNull
     public Map<String, Integer> analyze(@Nullable String text) {
@@ -25,7 +26,8 @@ public class SimpleTextAnalyzer implements TextAnalyzer {
             if (preparedWord.isEmpty()) {
                 continue;
             }
-            result.merge(preparedWord, 1, (currV, defaultV) -> currV + 1);
+            result.merge(preparedWord, 1, (currV, newV) -> currV + newV);
+
         }
         return result;
     }

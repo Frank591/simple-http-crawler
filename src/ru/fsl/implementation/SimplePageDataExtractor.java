@@ -46,9 +46,28 @@ public class SimplePageDataExtractor implements PageDataExtractor {
             if (href.contains(".svg")) {
                 continue;
             }
+
+            //ugly hacks for wiki parsing
+            if (href.contains("special:")) {
+                continue;
+            }
+            if (href.contains("wikipedia:")) {
+                continue;
+            }
+            if (href.contains("portal:")) {
+                continue;
+            }
+            if (href.contains("help:")) {
+                continue;
+            }
+            if (href.contains("category:")) {
+                continue;
+            }
+
             if (href.startsWith("/")) {
                 pageData.addLink(href);
             }
+
         }
         return pageData;
     }

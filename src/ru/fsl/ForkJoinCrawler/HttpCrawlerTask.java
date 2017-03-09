@@ -1,5 +1,6 @@
-package ru.fsl;
+package ru.fsl.ForkJoinCrawler;
 
+import ru.fsl.*;
 import ru.fsl.exceptions.PageDownloadException;
 
 import java.net.MalformedURLException;
@@ -82,7 +83,7 @@ public class HttpCrawlerTask extends RecursiveTask<Map<String, Integer>> {
                 continue;
             }
             for (Map.Entry<String, Integer> childRes : childCrawlResult.entrySet()) {
-                analyzeResult.merge(childRes.getKey(), 1, (currV, defaultV) -> currV + childRes.getValue());
+                analyzeResult.merge(childRes.getKey(), childRes.getValue(), (currV, newV) -> currV + newV);
             }
         }
         return analyzeResult;

@@ -10,10 +10,10 @@ public class SimplePageDownloaderTest {
     @Test
     public void getHTMLTest() throws Exception {
 
-        SimplePageDownloader pageDownloader = new SimplePageDownloader();
+        SimplePageDownloader pageDownloader = new SimplePageDownloader(5000);
         PageDownloadResult page = pageDownloader.download(new URL("http://csb.stanford.edu/class/public/pages/sykes_webdesign/05_simple.html"));
         Assert.assertTrue("Wrong page or page download error", page.getHtml().contains("A very simple webpage"));
-        Assert.assertTrue("Page body was not downloaded completely", page.getHtml().contains("</body></html>"));
+        Assert.assertTrue("Page body was not downloaded completely", page.getHtml().contains("</body>") && page.getHtml().contains("</html>"));
     }
 
 }
