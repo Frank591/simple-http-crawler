@@ -1,6 +1,6 @@
 package ru.fsl;
 
-import ru.fsl.ExecutorsBasedCrawler.ExecutorsBasedCrawlManager;
+import ru.fsl.ForkJoinCrawler.ForkJoinCrawlManager;
 import ru.fsl.implementation.ComponentsFactory;
 
 import java.io.BufferedReader;
@@ -8,9 +8,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Map;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 
 public class Main {
+
+    private static final int CPU_COUNT = 8;
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -23,12 +25,12 @@ public class Main {
             maxDeepLvl = Integer.parseInt(br.readLine());
 
             System.out.println(String.format("Running crawler with parameters [Url=%s, maxDeepLvl=%s]", url, maxDeepLvl));
-            CrawlManager crawlManager = new ExecutorsBasedCrawlManager(Executors.newFixedThreadPool(8), new ComponentsFactory(), true);
+            CrawlManager crawlManager = new ForkJoinCrawlManager(new ForkJoinPool(CPU_COUNT), new ComponentsFactory());
 
             long startMillis = System.currentTimeMillis();
             try {
-                final Map<String, Integer> crawlResults = crawlManager.crawl(new URL(url), maxDeepLvl);
-                for (Map.Entry<String, Integer> wordInfo : crawlResults.entrySet()) {
+                final Map<String, Long> crawlResults = crawlManager.crawl(new URL(url), maxDeepLvl);
+                for (Map.Entry<String, Long> wordInfo : crawlResults.entrySet()) {
                     System.out.println(String.format("Word '%s' : %s", wordInfo.getKey(), wordInfo.getValue()));
                 }
             } finally {

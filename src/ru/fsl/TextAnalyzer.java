@@ -7,5 +7,5 @@ import java.util.Map;
 
 public interface TextAnalyzer {
 
-    @NotNull Map<String, Integer> analyze(@Nullable String text);
+    @NotNull Map<String, Long> analyze(@Nullable String text);
 }

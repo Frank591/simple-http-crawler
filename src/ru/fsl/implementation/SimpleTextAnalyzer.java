@@ -14,8 +14,8 @@ public class SimpleTextAnalyzer implements TextAnalyzer {
 
     @Override
     @NotNull
-    public Map<String, Integer> analyze(@Nullable String text) {
-        Map<String, Integer> result = new HashMap<>();
+    public Map<String, Long> analyze(@Nullable String text) {
+        Map<String, Long> result = new HashMap<>();
         if (text == null || text.trim().isEmpty()) {
             return result;
         }
@@ -26,7 +26,7 @@ public class SimpleTextAnalyzer implements TextAnalyzer {
             if (preparedWord.isEmpty()) {
                 continue;
             }
-            result.merge(preparedWord, 1, (currV, newV) -> currV + newV);
+            result.merge(preparedWord, 1L, (currV, newV) -> currV + newV);
 
         }
         return result;

@@ -9,6 +9,10 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+
+@Deprecated
+//Problems with lost page analyze results available, if different link levels contains same link
+//TODO fix
 public class ExecutorsBasedCrawlManager implements CrawlManager {
 
     private static final int SLEEP_DURATION_BETWEEN_ITERATIONS_MS = 500;
@@ -28,12 +32,12 @@ public class ExecutorsBasedCrawlManager implements CrawlManager {
     }
 
     @Override
-    public Map<String, Integer> crawl(URL url, int maxDeepLevel) {
+    public Map<String, Long> crawl(URL url, int maxDeepLevel) {
         if (maxDeepLevel < 0) {
             throw new IllegalArgumentException("maxDeepLevel can't be negative");
         }
         alreadyProcessedUrls.clear();
-        Map<String, Integer> result = new HashMap<>();
+        Map<String, Long> result = new HashMap<>();
         List<Future<CrawlResult>> crawlTasks = new LinkedList<>();
 
         HttpCrawlerCallable crawler = new HttpCrawlerCallable(factory, url, 0);
@@ -58,7 +62,7 @@ public class ExecutorsBasedCrawlManager implements CrawlManager {
                         continue;
                     }
                     //merge results
-                    for (Map.Entry<String, Integer> wordStat : taskResult.getPageAnalyzeResult().entrySet()) {
+                    for (Map.Entry<String, Long> wordStat : taskResult.getPageAnalyzeResult().entrySet()) {
                         result.merge(wordStat.getKey(), wordStat.getValue(), (currV, newV) -> currV + newV);
                     }
                     if (isDebugEnabled) {

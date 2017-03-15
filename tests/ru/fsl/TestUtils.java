@@ -17,8 +17,8 @@ public class TestUtils {
         return String.format("%s - expected: '%s', actual:'%s'.", objectDescription, expected, actual);
     }
 
-    public static void assertEquals(String objectDescription, int expected, int actual) {
-        Assert.assertTrue(TestUtils.getErrorMessage(objectDescription, Integer.toString(expected), Integer.toString(actual)), expected == actual);
+    public static void assertEquals(String objectDescription, long expected, long actual) {
+        Assert.assertTrue(TestUtils.getErrorMessage(objectDescription, Long.toString(expected), Long.toString(actual)), expected == actual);
     }
 
     public static void assertEquals(String objectDescription, String expected, String actual) {

@@ -9,12 +9,12 @@ import java.util.Map;
 public class CrawlResult {
     private URL url;
     private List<URL> childLinks;
-    private Map<String, Integer> pageAnalyzeResult;
+    private Map<String, Long> pageAnalyzeResult;
     private int currentDeepLevel;
     private long pageCharsCount;
 
 
-    public CrawlResult(@NotNull URL url, long pageCharsCount, @NotNull List<URL> childLinks, @NotNull Map<String, Integer> pageAnalyzeResult, int currentDeepLevel) {
+    public CrawlResult(@NotNull URL url, long pageCharsCount, @NotNull List<URL> childLinks, @NotNull Map<String, Long> pageAnalyzeResult, int currentDeepLevel) {
         this.url = url;
         this.pageCharsCount = pageCharsCount;
         this.childLinks = childLinks;
@@ -22,13 +22,14 @@ public class CrawlResult {
         this.currentDeepLevel = currentDeepLevel;
     }
 
+
     @NotNull
     public Iterable<URL> getChildLinks() {
         return childLinks;
     }
 
     @NotNull
-    public Map<String, Integer> getPageAnalyzeResult() {
+    public Map<String, Long> getPageAnalyzeResult() {
         return pageAnalyzeResult;
     }
 
@@ -43,4 +44,5 @@ public class CrawlResult {
     public long getPageCharsCount() {
         return pageCharsCount;
     }
+
 }

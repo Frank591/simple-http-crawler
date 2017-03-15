@@ -1,95 +1,79 @@
 package ru.fsl.ForkJoinCrawler;
 
 import ru.fsl.*;
-import ru.fsl.exceptions.PageDownloadException;
 
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 
 
-public class HttpCrawlerTask extends RecursiveTask<Map<String, Integer>> {
+public class HttpCrawlerTask extends RecursiveTask<CrawlResult> {
 
 
     private final CrawlerComponentsFactory factory;
     private final URL url;
     private final int maxLinkDeepLevel;
     private final int currentLinkDeepLevel;
-    private final Set<String> alreadyProcessedUrls;
 
     public HttpCrawlerTask(CrawlerComponentsFactory factory, URL url, int currentLinkDeepLevel, int maxLinkDeepLevel) {
         this.factory = factory;
         this.url = url;
         this.maxLinkDeepLevel = maxLinkDeepLevel;
         this.currentLinkDeepLevel = currentLinkDeepLevel;
-        alreadyProcessedUrls = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        alreadyProcessedUrls.add(getUrlAsString(url));
     }
 
-    private HttpCrawlerTask(CrawlerComponentsFactory factory, URL url, int currentLinkDeepLevel, int maxLinkDeepLevel, Set<String> alreadyProcessedUrls) {
-        this.factory = factory;
-        this.url = url;
-        this.maxLinkDeepLevel = maxLinkDeepLevel;
-        this.currentLinkDeepLevel = currentLinkDeepLevel;
-        this.alreadyProcessedUrls = alreadyProcessedUrls;
-        this.alreadyProcessedUrls.add(getUrlAsString(url));
-    }
-
-    public Map<String, Integer> compute() {
+    /**
+     * Process url from constructor and after recursively process all found outgoing links from page
+     * while not obtain deep level limit.
+     *
+     * @return crawl result for url from constructor
+     */
+    public CrawlResult compute() {
         PageDownloader pageDownloader = factory.createPageDownloader();
-        PageDownloadResult page = null;
+        PageDownloadResult page;
         try {
+            if (currentLinkDeepLevel > maxLinkDeepLevel) {
+                return CrawlResult.CreateSkippedResult(url, currentLinkDeepLevel, maxLinkDeepLevel);
+            }
+            //download and parse html
             page = pageDownloader.download(url);
-        } catch (PageDownloadException e) {
-            throw new RuntimeException(e);
-        }
+            PageDataExtractor pageDataExtractor = factory.createPageDataExtractor();
+            PageData pageData = pageDataExtractor.extract(page.getHtml());
 
-        PageDataExtractor pageDataExtractor = factory.createPageDataExtractor();
-        PageData pageData = pageDataExtractor.extract(page.getHtml());
-
-        //process child page links
-        List<ForkJoinTask<Map<String, Integer>>> crawlResultsByPageLinks = new ArrayList<>();
-        if (currentLinkDeepLevel < maxLinkDeepLevel) {
+            List<URL> childLinks = new ArrayList<>();
             for (String link : pageData.getLinks()) {
-                URL linkUrl = null;
-                try {
-                    linkUrl = Utils.combineUrls(page.getBaseUrl(), link);
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
-                }
-                if (alreadyProcessedUrls.contains(linkUrl.toString().toLowerCase())) {
-                    System.out.println(String.format("Link to page '%s' from page '%s' was skipped, because linked page was already processed.", linkUrl.toString(), url.toString()));
-                    continue;
-                }
-                final HttpCrawlerTask newCrawler = new HttpCrawlerTask(factory, linkUrl, currentLinkDeepLevel + 1, maxLinkDeepLevel, alreadyProcessedUrls);
+                childLinks.add(Utils.combineUrls(page.getBaseUrl(), link));
+            }
+
+            //process outgoing page links
+            List<ForkJoinTask<CrawlResult>> crawlResultsByPageLinks = new ArrayList<>();
+            for (URL link : childLinks) {
+                final HttpCrawlerTask newCrawler = new HttpCrawlerTask(factory, link, currentLinkDeepLevel + 1, maxLinkDeepLevel);
                 crawlResultsByPageLinks.add(newCrawler.fork());
             }
-        }
 
-        //analyze page text
-        TextAnalyzer textAnalyzer = factory.createTextAnalyzer();
-        Map<String, Integer> analyzeResult = textAnalyzer.analyze(pageData.getText());
+            //analyze page text
+            TextAnalyzer textAnalyzer = factory.createTextAnalyzer();
+            Map<String, Long> analyzeResult = textAnalyzer.analyze(pageData.getText());
+            CrawlResult pageCrawlResult = new CrawlResult(CrawlStatus.SUCCESS,
+                    url,
+                    currentLinkDeepLevel,
+                    null,
+                    new PageAnalyzeResult(page.getHtml().length(), childLinks, analyzeResult));
 
-        //merge page text analyze result and child pages analyze results
-        for (ForkJoinTask<Map<String, Integer>> childLinkCrawlTask : crawlResultsByPageLinks) {
-            Map<String, Integer> childCrawlResult;
-            try {
-                childCrawlResult = childLinkCrawlTask.join();
-            } catch (Exception e) {
-                e.printStackTrace();
-                continue;
+            //merge
+            for (ForkJoinTask<CrawlResult> childLinkCrawlTask : crawlResultsByPageLinks) {
+                CrawlResult childCrawlResult = childLinkCrawlTask.join();
+                pageCrawlResult.getOutgoingLinksCrawlResults().add(childCrawlResult);
             }
-            for (Map.Entry<String, Integer> childRes : childCrawlResult.entrySet()) {
-                analyzeResult.merge(childRes.getKey(), childRes.getValue(), (currV, newV) -> currV + newV);
-            }
+            return pageCrawlResult;
+        } catch (Exception e) {
+            return CrawlResult.CreateErrorResult(url, currentLinkDeepLevel, Utils.getStackTrace(e));
         }
-        return analyzeResult;
     }
 
-    private static String getUrlAsString(URL url) {
-        return url.toString().toLowerCase();
-    }
+
 }

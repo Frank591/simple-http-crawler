@@ -32,7 +32,7 @@ public class HttpCrawlerCallable implements Callable<CrawlResult> {
 
         //analyze page text
         TextAnalyzer textAnalyzer = factory.createTextAnalyzer();
-        Map<String, Integer> analyzeResult = textAnalyzer.analyze(pageData.getText());
+        Map<String, Long> analyzeResult = textAnalyzer.analyze(pageData.getText());
         List<URL> childLinks = new ArrayList<>();
         for (String link : pageData.getLinks()) {
             childLinks.add(Utils.combineUrls(page.getBaseUrl(), link));
